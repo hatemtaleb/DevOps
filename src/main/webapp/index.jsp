@@ -1,5 +1,5 @@
 <html>
 <body>
-<h2>Hello Word</h2>
+<h2>Hello DevOps</h2>
 </body>
 </html>
