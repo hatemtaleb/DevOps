@@ -1,0 +1,189 @@
+      if
+       [ -f log.temporaire ]
+          then
+              rm -rf log.temporaire
+       fi
+
+       cat ${LOGOR} | egrep -vi "DBMS_OUTPUT.PUT_LINE|Errors and warnings|^DOC|_error_|('W', 'Warning')|v_nbr_error|v_nbr_warning|Warning 1 - |Warning 2 - |Recherche Warnings|created with compilation errors" >log.temporaire
+       cat log.temporaire >${LOGOR}
+       rm -rf log.temporaire
+
+
+                                                                                                                    
+egrep  'SQL> @/oracle/product/10.2.0/rdbms/admin/utlrp|COMP_TIMESTAMP'  ${LOGOR}             
+if [ $? -ne 0 ]                                                                                                     
+  then                                                                                                              
+        echo    " "                                                                                                 
+        echo -e " ${CL_RED} ATTENTION ATTENTION ATTENTION ATTENTION ATTENTION ATTENTION ATTENTION                   ${RESET}" | tee -a ${LOGOR}
+        echo    " "                                                                                                 
+        echo -e " ${CL_RED} ATTENTION ATTENTION : Il y a un probleme                                                ${RESET}" | tee -a ${LOGOR}
+        echo    " "                                                                                                 
+        echo -e " ${CL_RED} Tous les scripts applicatifs n ont pas ete executes                                     ${RESET}" | tee -a ${LOGOR}
+        echo -e " ${CL_RED} Il y a eu interruption dans l execution des scripts applicatifs                         ${RESET}" | tee -a ${LOGOR}
+        echo -e " ${CL_RED} Il n y a pas eu de compile en masse                                                     ${RESET}" | tee -a ${LOGOR}
+        echo -e " ${CL_RED} Il y a probablement une erreur dans le fichier 'lanceur_user_applicatif.sql'            ${RESET}" | tee -a ${LOGOR}
+        echo    " "                                                                                                 
+        echo -e " ${CL_RED} Il faut ANALYSER le fichier  '${LOGOR}'                                                 ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        egrep    -n  'ORA-|SP2|HELP|Errors'  ${LOGOR} > 'ERROR.txt'
+        echo -e " ${CL_RED} $(cat 'ERROR.txt')                                                                  ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        EXP_STATUS=2
+        echo    " ---------------------------------------------------------------------------------------------  "
+        echo -e " ${CL_BLUE} INSTALL ON  '$(hostname)'                                                              ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        echo -e " ${CL_RED} FIN ANORMALE    Timestamp ==> $(date '+%a %F %T')                                       ${RESET}" | tee -a ${LOGOR}
+        echo    " ---------------------------------------------------------------------------------------------  "
+        echo   " "
+        exit $EXP_STATUS
+  else
+        echo    " "
+        echo -e " ${CL_BLUE} il faut controler le resultat de la compile en masse                                   ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        
+fi
+
+
+
+cat  ${LOGOR} | egrep -vi '\@|lanceur|select|DOC|utlrp|DBMS_OUTPUT.PUT_LINE|COMMENT ON COLUMN | updated | created ' | egrep  'completed|created|deleted|altered|^Commit|updated|succeeded'
+if [ $? -ne 0 ]
+  then
+        echo    " "
+        echo -e " ${CL_RED} il faut analyser le fichier '${LOGOR}'                                                  ${RESET}" | tee -a ${LOGOR}
+        echo    " "                                                                                                 
+        echo -e " ${CL_RED} a priori, aucun script applicatif n a ete execute                                       ${RESET}" | tee -a ${LOGOR}
+        echo    " "                                                                                                 
+        echo -e " ${CL_RED} ce n est absolument pas normal                                                          ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        EXP_STATUS=2
+        echo    " ---------------------------------------------------------------------------------------------  "
+        echo -e " ${CL_BLUE} INSTALL ON  '$(hostname)'                                                              ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        echo -e " ${CL_RED} FIN ANORMALE    Timestamp ==> $(date '+%a %F %T')                                       ${RESET}" | tee -a ${LOGOR}
+        echo    " ---------------------------------------------------------------------------------------------  "
+        echo    " "
+        exit $EXP_STATUS
+#  else
+#        echo    " "
+#        echo -e " ${CL_BLUE} Les scripts sql ont ete executes                                                       ${RESET}" | tee -a ${LOGOR}
+#        echo -e " ${CL_BLUE} Il faut ANALYSER le fichier  '${LOGOR}'                                                ${RESET}" | tee -a ${LOGOR}
+#        echo    " "
+fi
+
+# "no rows selected"
+
+
+
+
+egrep -n  'SP2'  ${LOGOR}
+if [ $? -eq 0 ]
+  then
+    echo -e "${CL_RED}  ======================>     FATAL ERROR        <=============================       ${RESET}" | tee -a ${LOGOR}
+##    echo    " "
+    egrep    -n  'SP2'  ${LOGOR}    >> 'ERROR.txt'
+##    echo -e " ${CL_RED} $(cat 'ERROR.txt')                                                                  ${RESET}" | tee -a ${LOGOR}
+##    echo    " "
+    EXP_STATUS=2
+    echo    " ---------------------------------------------------------------------------------------------  "
+    echo    " "
+    echo -e " ${CL_RED} FIN ANORMALE    Timestamp ==> $(date '+%a %F %T')                                       ${RESET}" | tee -a ${LOGOR}
+    echo    " ---------------------------------------------------------------------------------------------  "
+    echo -e " ${CL_RED} il faut analyser le fichier '${LOGOR}'                                                  ${RESET}" | tee -a ${LOGOR}
+    echo    " ---------------------------------------------------------------------------------------------  "
+    echo    " "
+    exit $EXP_STATUS
+  else
+    echo    " "
+    echo    " ---------------------------------------------------------------------------------------------  "
+    echo -e " ${CL_RED} FIN NORMALE    Timestamp ==> $(date '+%a %F %T')                ${RESET}" | tee -a ${LOGOR}
+    echo    " "
+    echo -e " ${CL_BLUE} INSTALL ON  '$(hostname)'                                      ${RESET}" | tee -a ${LOGOR}
+    echo    " "
+fi
+
+
+
+function INVALID ()
+   {
+        echo    " "
+        egrep   'no rows selected'  ${LOGCO}
+              if [ $? -eq 0 ]
+                 then
+                     echo -e " ${CL_BLUE} A priori, il n y a pas d objet INVALID                                    ${RESET}" | tee -a ${LOGOR}
+                 else
+                     echo -e " ${CL_RED} Voici la liste des objets INVALID                                          ${RESET}" | tee -a ${LOGOR}
+                     cat  ${LOGCO}
+              fi
+        echo    " "
+   }
+
+
+egrep -n  'ORA-|SP2|Errors'  ${LOGOR}
+if [ $? -ne 0 ]
+  then
+        echo    " "
+        echo -e " ${CL_BLUE} il n y aucune erreur dans le fichier '${LOGOR}'                                        ${RESET}" | tee -a ${LOGOR}
+        echo -e " ${CL_BLUE} mais rien ne peut remplacer l'analyse du fichier log par un DBA  :)                    ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        echo -e " ${CL_BLUE} Verifier s'il y a des objets INVALID dans l'instance ${ORACLE_SID}                     ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        INVALID
+        echo    " "
+        echo    " ---------------------------------------------------------------------------------------------  "
+        echo -e " ${CL_BLUE} INSTALL ON  '$(hostname)'                                                              ${RESET}" | tee -a ${LOGOR}
+        echo    " "
+        echo -e " ${CL_BLUE} FIN FIN FIN    Timestamp ==> $(date '+%a %F %T')                                       ${RESET}" | tee -a ${LOGOR}
+        echo    " ---------------------------------------------------------------------------------------------  "
+  else
+        if   [ ! -f ${LOGCO} ]
+          then
+              echo -e "${CL_RED}  ======================>     FATAL ERROR        <=============================       ${RESET}" | tee -a ${LOGOR}
+              echo -e "${CL_RED}  Il n'y a pas de de compilation en masse                                             ${RESET}" | tee -a ${LOGOR}
+              echo -e "${CL_RED}  l execution des scripts a ete interrompue par une erreur fatale                     ${RESET}" | tee -a ${LOGOR}
+              echo    " "
+              echo -e " ${CL_RED} il faut analyser le fichier '${LOGOR}'                                              ${RESET}" | tee -a ${LOGOR}
+              echo    " "
+              egrep    -n  'ORA-|SP2|HELP|Errors'  ${LOGOR} | egrep  -vi 'Warning' > 'ERROR.txt'
+              echo -e " ${CL_RED} $(cat 'ERROR.txt')                                                                  ${RESET}" | tee -a ${LOGOR}
+              echo    " "
+              egrep -n  'ORA-00904|DBMS_REGISTRY_SYS|invalid identifier'  ${LOGOR}
+              if [ $? -eq 0 ]
+                 then
+                 echo  -e "${CL_RED}  Erreur DBMS_REGISTRY_SYS du a un commit manquant dans le dernier script sql execute ${RESET}" | tee -a ${LOGOR}
+                 echo    " "
+              fi
+              EXP_STATUS=2
+              echo    " ---------------------------------------------------------------------------------------------  "
+              echo -e " ${CL_BLUE} INSTALL ON  '$(hostname)'                                                              ${RESET}" | tee -a ${LOGOR}
+              echo    " "
+              echo -e " ${CL_RED} FIN ANORMALE    Timestamp ==> $(date '+%a %F %T')                                       ${RESET}" | tee -a ${LOGOR}
+              echo    " ---------------------------------------------------------------------------------------------  "
+              echo    " "
+              echo    " "
+              exit $EXP_STATUS
+          else
+              echo    " "
+              echo -e " ${CL_RED} il faut analyser le fichier '${LOGOR}'                                                  ${RESET}" | tee -a ${LOGOR}
+              echo    " "                                                                                                 
+              egrep    -n  'Warning'  ${LOGOR} > 'WARNINGS.txt'                                                     
+              echo -e " ${CL_RED} $(cat 'WARNINGS.txt')                                                                   ${RESET}" | tee -a ${LOGOR}
+              echo    " "                                                                                                 
+              echo -e " ${CL_BLUE} Certains Warnings ont ete resolus par la compile en masse                              ${RESET}" | tee -a ${LOGOR}
+              echo -e " ${CL_RED} Certains Warnings sont graves et necessitent reparation                                 ${RESET}" | tee -a ${LOGOR}
+              echo    " "                                                                                                 
+              echo -e " ${CL_BLUE} Il faut controler le fichier '${LOGOR}'                                                ${RESET}" | tee -a ${LOGOR}
+              echo -e " ${CL_RED} Il faut controler la liste des objets invalides                                         ${RESET}" | tee -a ${LOGOR}
+              echo    " "
+              INVALID 
+              echo    " "
+              EXP_STATUS=2
+              echo    " ---------------------------------------------------------------------------------------------  "
+              echo -e " ${CL_BLUE} INSTALL ON  '$(hostname)'                                                              ${RESET}" | tee -a ${LOGOR}
+              echo    " "
+              echo -e " ${CL_RED} FIN ANORMALE    Timestamp ==> $(date '+%a %F %T')                                       ${RESET}" | tee -a ${LOGOR}
+              echo    " ---------------------------------------------------------------------------------------------  "
+              echo    " "
+              echo    " "
+              exit $EXP_STATUS
+        fi
+fi
